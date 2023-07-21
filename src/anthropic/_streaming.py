@@ -34,8 +34,7 @@ class Stream(Generic[ResponseT]):
         return self._iterator.__next__()
 
     def __iter__(self) -> Iterator[ResponseT]:
-        for item in self._iterator:
-            yield item
+        yield from self._iterator
 
     def _iter_events(self) -> Iterator[ServerSentEvent]:
         yield from self._decoder.iter(self.response.iter_lines())
@@ -229,16 +228,11 @@ class SSEDecoder:
         elif fieldname == "data":
             self._data.append(value)
         elif fieldname == "id":
-            if "\0" in value:
-                pass
-            else:
+            if "\0" not in value:
                 self._last_event_id = value
         elif fieldname == "retry":
             try:
                 self._retry = int(value)
             except (TypeError, ValueError):
                 pass
-        else:
-            pass  # Field is ignored.
-
         return None

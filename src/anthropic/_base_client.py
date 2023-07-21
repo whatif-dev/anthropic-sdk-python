@@ -134,9 +134,7 @@ class BasePage(GenericModel, Generic[ModelT]):
 
     def has_next_page(self) -> bool:
         items = self._get_page_items()
-        if not items:
-            return False
-        return self.next_page_info() is not None
+        return False if not items else self.next_page_info() is not None
 
     def next_page_info(self) -> Optional[PageInfo]:
         ...
@@ -188,8 +186,7 @@ class BaseSyncPage(BasePage[ModelT], Generic[ModelT]):
     # by pydantic.
     def __iter__(self) -> Iterator[ModelT]:  # type: ignore
         for page in self.iter_pages():
-            for item in page._get_page_items():
-                yield item
+            yield from page._get_page_items()
 
     def iter_pages(self: SyncPageT) -> Iterator[SyncPageT]:
         page = self
@@ -477,7 +474,7 @@ class BaseClient:
             # the response class ourselves but that is something that should be supported directly in httpx
             # as it would be easy to incorrectly construct the Response object due to the multitude of arguments.
             if cast_to != httpx.Response:
-                raise ValueError(f"Subclasses of httpx.Response cannot be passed to `cast_to`")
+                raise ValueError("Subclasses of httpx.Response cannot be passed to `cast_to`")
             return cast(ResponseT, response)
 
         # The check here is necessary as we are subverting the the type system
@@ -490,9 +487,9 @@ class BaseClient:
         # this function would become unsafe but a type checker would not report an error.
         if (
             cast_to is not UnknownResponse
-            and not origin is list
-            and not origin is dict
-            and not origin is Union
+            and origin is not list
+            and origin is not dict
+            and origin is not Union
             and not issubclass(origin, BaseModel)
         ):
             raise RuntimeError(
@@ -610,7 +607,7 @@ class BaseClient:
         # Apply some jitter, plus-or-minus half a second.
         jitter = random() - 0.5
         timeout = sleep_seconds + jitter
-        return timeout if timeout >= 0 else 0
+        return max(timeout, 0)
 
     def _should_retry(self, response: httpx.Response) -> bool:
         # Note: this is not a standard header
@@ -627,14 +624,7 @@ class BaseClient:
             return True
 
         # Retry on rate limits.
-        if response.status_code == 429:
-            return True
-
-        # Retry internal errors.
-        if response.status_code >= 500:
-            return True
-
-        return False
+        return True if response.status_code == 429 else response.status_code >= 500
 
     def _idempotency_key(self) -> str:
         return f"stainless-python-retry-{uuid.uuid4()}"
@@ -1387,15 +1377,8 @@ def get_platform() -> Platform:
         if distro_id == "freebsd":
             return "FreeBSD"
 
-        if distro_id == "openbsd":
-            return "OpenBSD"
-
-        return "Linux"
-
-    if platform_name:
-        return OtherPlatform(platform_name)
-
-    return "Unknown"
+        return "OpenBSD" if distro_id == "openbsd" else "Linux"
+    return OtherPlatform(platform_name) if platform_name else "Unknown"
 
 
 class OtherArch:
@@ -1426,10 +1409,7 @@ def get_architecture() -> Arch:
     if python_bitness == "32bit":
         return "x32"
 
-    if machine:
-        return OtherArch(machine)
-
-    return "unknown"
+    return OtherArch(machine) if machine else "unknown"
 
 
 def _merge_mappings(

@@ -119,23 +119,17 @@ class Anthropic(SyncAPIClient):
     def auth_headers(self) -> dict[str, str]:
         if self._api_key_header:
             return self._api_key_header
-        if self._auth_token_bearer:
-            return self._auth_token_bearer
-        return {}
+        return self._auth_token_bearer if self._auth_token_bearer else {}
 
     @property
     def _api_key_header(self) -> dict[str, str]:
         api_key = self.api_key
-        if api_key is None:
-            return {}
-        return {"X-Api-Key": api_key}
+        return {} if api_key is None else {"X-Api-Key": api_key}
 
     @property
     def _auth_token_bearer(self) -> dict[str, str]:
         auth_token = self.auth_token
-        if auth_token is None:
-            return {}
-        return {"Authorization": f"Bearer {auth_token}"}
+        return {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
 
     @property
     def default_headers(self) -> dict[str, str | Omit]:
@@ -304,23 +298,17 @@ class AsyncAnthropic(AsyncAPIClient):
     def auth_headers(self) -> dict[str, str]:
         if self._api_key_header:
             return self._api_key_header
-        if self._auth_token_bearer:
-            return self._auth_token_bearer
-        return {}
+        return self._auth_token_bearer if self._auth_token_bearer else {}
 
     @property
     def _api_key_header(self) -> dict[str, str]:
         api_key = self.api_key
-        if api_key is None:
-            return {}
-        return {"X-Api-Key": api_key}
+        return {} if api_key is None else {"X-Api-Key": api_key}
 
     @property
     def _auth_token_bearer(self) -> dict[str, str]:
         auth_token = self.auth_token
-        if auth_token is None:
-            return {}
-        return {"Authorization": f"Bearer {auth_token}"}
+        return {} if auth_token is None else {"Authorization": f"Bearer {auth_token}"}
 
     @property
     def default_headers(self) -> dict[str, str | Omit]:

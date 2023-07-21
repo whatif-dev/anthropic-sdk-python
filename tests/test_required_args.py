@@ -43,7 +43,7 @@ def test_keyword_only_param() -> None:
 def test_multiple_params() -> None:
     @required_args(["a", "b", "c"])
     def foo(a: str = "", *, b: str = "", c: str = "") -> str | None:
-        return a + " " + b + " " + c
+        return f"{a} {b} {c}"
 
     assert foo(a="a", b="b", c="c") == "a b c"
 
@@ -91,9 +91,7 @@ def test_multiple_params_multiple_variants() -> None:
     def foo(*, a: str | None = None, b: str | None = None, c: str | None = None) -> str | None:
         if a is not None:
             return a
-        if b is not None:
-            return b
-        return c
+        return b if b is not None else c
 
     error_message = r"Missing required arguments; Expected either \('a' and 'b'\) or \('c'\) arguments to be given"
 
